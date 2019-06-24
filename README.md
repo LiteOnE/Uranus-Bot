@@ -1,2 +1,2 @@
-# Uranus-Bot
+# Uranus Discord Bot
 Discord Hack Week Bot
