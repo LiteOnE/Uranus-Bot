@@ -116,6 +116,7 @@ for (let i = 0; i < query.length; i += 1) {
     if (c == '(') {
         balance += 1;
 
+        //higher (technically lower) priority
         cur.low = new Node();
         cur.low.high = cur;
 
@@ -136,6 +137,7 @@ for (let i = 0; i < query.length; i += 1) {
 
         is_tag = true;
 
+        //skip for multiple closing brackets
         while (query[i] == ')') {
             cur = cur.high;
             i += 1;
@@ -145,6 +147,7 @@ for (let i = 0; i < query.length; i += 1) {
             c = query[i];
 
             if (c == '&') {
+                //push double priority for brackets and AND operator
                 let low2 = cur.low;
 
                 cur.low = new Node();
@@ -224,16 +227,72 @@ cur.val = val || null;
 cur.operator = 0;
 
 cur = root;
-var result = [];
+var results = [];
+var result_pos = 0;
+var operator = -1;//-1 means start operator
 
-while (cur.next != null) {
+while (cur != null) {
     while (cur.low != null) {
         cur = cur.low;
     }
 
+    var filtered = [];
+
     //execute
+    for (let user of test_users) {
+        if (user[cur.tag] == user[cur.val]) {//todo: add support for flags
+            filtered.push(user);
+        }
+    }
+
+    results.push(filtered);
+    result_pos += 1;
+
+    if (operator != -1) {
+        switch (operator) {
+            case '|':
+                for (let item of results[result_pos]) {
+                    if (!results[result_pos - 1].includes(item)) {
+                        results[result_pos - 1].push(item);
+                    }
+                }
+                break;
+
+            case '&':
+                let temp_arr = [];
+
+                for (let item of results[result_pos]) {
+                    if (results[result_pos - 1].includes(item)) {
+                        temp_arr.push(item);
+                    }
+                }
+
+                results[result_pos] = temp_arr;
+
+                break;
+        }
+    }
 
 
+    //save operator
+    operator = cur.operator;
+
+    if (cur.next != null) {
+        cur = cur.next;
+    }
+    else {
+        if (cur.high != null) {
+            //move result to top
+            cur = cur.high;
+
+            //execute
+
+            cur = cur.next;
+        }
+        else {
+            //exexute, exit
+        }
+    }
 }
 
 

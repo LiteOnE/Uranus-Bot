@@ -1,4 +1,4 @@
 # Uranus Discord Bot
-Discord Hack Week Bot
+![Main Banner](/banner.png)
 
-My bot - Uranus
+Discord Hack Week Bot
