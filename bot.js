@@ -85,8 +85,10 @@ var test_users = [
     }
 ];
 
-var query = '(username=sas|username=sos)|(role=test|role=best)&(nickname=ses|nickname=beb)';//u  - username, n - nickname, r = role
-var query2 = 'username=sas|nickname=sos&role=test|user=bob';
+var query1 = 'username=sas';
+var query2 = 'username=bab&role=vev';
+var query3 = '(username=sas|username=sos)|(role=bobs|role=vev)&(nickname=sos|nickname=ses)';//u  - username, n - nickname, r = role
+var query = 'role=vev&username=bab|username=sas&nickname=bob';
 
 class Node {
     constructor(tag = null, val = null, operator = 0) {
@@ -105,8 +107,8 @@ var val = '';
 
 var is_tag = true;
 
-var root = new Node();
-var cur = root;
+var root_node = new Node();
+var cur = root_node;
 
 var balance = 0;
 
@@ -226,74 +228,52 @@ cur.tag = tag || null;
 cur.val = val || null;
 cur.operator = 0;
 
-cur = root;
-var results = [];
-var result_pos = 0;
-var operator = -1;//-1 means start operator
+cur = root_node;
 
-while (cur != null) {
-    while (cur.low != null) {
-        cur = cur.low;
-    }
+function executeQuery(node, filtered_prev, operator) {
 
     var filtered = [];
 
-    //execute
-    for (let user of test_users) {
-        if (user[cur.tag] == user[cur.val]) {//todo: add support for flags
-            filtered.push(user);
-        }
-    }
-
-    results.push(filtered);
-    result_pos += 1;
-
-    if (operator != -1) {
-        switch (operator) {
-            case '|':
-                for (let item of results[result_pos]) {
-                    if (!results[result_pos - 1].includes(item)) {
-                        results[result_pos - 1].push(item);
-                    }
-                }
-                break;
-
-            case '&':
-                let temp_arr = [];
-
-                for (let item of results[result_pos]) {
-                    if (results[result_pos - 1].includes(item)) {
-                        temp_arr.push(item);
-                    }
-                }
-
-                results[result_pos] = temp_arr;
-
-                break;
-        }
-    }
-
-
-    //save operator
-    operator = cur.operator;
-
-    if (cur.next != null) {
-        cur = cur.next;
+    if (node.low != null) {
+        filtered = executeQuery(node.low, null, -1);
     }
     else {
-        if (cur.high != null) {
-            //move result to top
-            cur = cur.high;
-
-            //execute
-
-            cur = cur.next;
+        for (let user of test_users) {
+            if (user[node.tag] == node.val) {//todo: add support for flags
+                filtered.push(user);
+            }
         }
-        else {
-            //exexute, exit
-        }
+    }
+
+    switch (operator) {
+        case '|':
+            for (let item of filtered_prev) {
+                if (!filtered.includes(item)) {
+                    filtered.push(item);
+                }
+            }
+            break;
+
+        case '&':
+            var result_query = [];
+
+            for (let item of filtered_prev) {
+                if (filtered.includes(item)) {
+                    result_query.push(item);
+                }
+            }
+
+            filtered = result_query;
+
+            break;
+    }
+
+    if (node.next != null) {
+        return executeQuery(node.next, filtered, node.operator);
+    }
+    else {
+        return filtered;
     }
 }
 
-
-console.log(root);
+console.log(executeQuery(root_node, null, -1));
