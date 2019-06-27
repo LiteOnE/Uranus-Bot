@@ -18,13 +18,10 @@ It contains of properties, values, flags, operators and brackets
 
 ### Properties
 
-- `nickname`
-Looks at user's nickname on server. If they don't have one, the search will be applied to username
-- `username`
-User's username
-- `role`
-Role applied to user on server
-- `bot` Whether or not member is a bot
+- `nickname` - Looks at user's nickname on server. If they don't have one, the search will be applied to username
+- `username` - User's username
+- `role` - Role applied to user on server
+- `bot` - Whether or not member is a bot
 
 ### Operators
 
@@ -33,19 +30,17 @@ Role applied to user on server
 
 ```
 Keep in mind that boolean rules work here and '&' will be executed the first and then '|'
-But if you don't want that you may use brackets
+But if you don't want that, you may use brackets
 ```
 
 ### Brackets
 
-- '('
-Opening bracket
-- ')'
-Closing bracket
+- `(` - Opening bracket
+- `)` - Closing bracket
 
 ```
-You can use brackets to define execution order.
-For example a|b&c - the first b&c will be executed and then a|
+You can use brackets to define execution order
+For example a|b&c - b&c will be executed the first and only then a|
 But you may want to execute a|b the first, so you need to use brackets like this: (a|b)&c
 ```
 
