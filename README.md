@@ -1,7 +1,8 @@
-# Uranus Discord Bot
+# Discord Hack Week Bot 2019
+
 ![Main Banner](/banner.png)
 
-# Discord Hack Week Bot
+# Uranus Discord Bot
 
 Uranus - a simple moderation bot with a unique member search feature - queries
 
@@ -22,19 +23,43 @@ User's nickname on server. If they don't have one, the search will be applied to
 - `username`
 User's username
 - `role`
-
-- `bot` (in todo)
+User's applied role on server
+- `bot` Whether or not member is a bot
 
 ### Operators
 
 - `|` - Or
 - `&` - And
 
+```
+Keep in mind that boolean rules work here and '&' will be executed the first and then '|'
+```
+
 ### Flags
 
 - `!` - inversed (Not operation)
 - `*` - partial matching
 - `?` - case sensitive
+
+```
+The flags should be entered after property name and before '=' sign,
+which is used to split property name with flags from value to search
+```
+
+### Brackets
+
+- '('
+Opening bracket
+- ')'
+Closing bracket
+
+```
+You can use brackets to define execution order.
+For example a|b&c - the first b&c will be executed
+and then a|
+But you may want to execute a|b the first,
+so you need to use brackets like this (a|b)&c
+```
 
 ### An example command
 
