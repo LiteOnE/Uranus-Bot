@@ -32,7 +32,7 @@ It contains of properties, values, flags, operators and brackets
 - `&` - And
 
 ```
-Keep in mind that boolean rules work here and '&' will be executed the first and then '|'
+💡 Keep in mind that boolean rules work here and '&' will be executed the first and then '|'
 But if you don't want that, you may use brackets
 ```
 
@@ -42,7 +42,7 @@ But if you don't want that, you may use brackets
 - `)` - Closing bracket
 
 ```
-You can use brackets to define execution order
+💡 You can use brackets to define execution order
 For example a|b&c - b&c will be executed the first and only then a|
 But you may want to execute a|b the first, so you need to use brackets like this: (a|b)&c
 ```
@@ -54,7 +54,7 @@ But you may want to execute a|b the first, so you need to use brackets like this
 - `?` - Case sensitive
 
 ```
-The flags should be entered after property name and before '=' sign,
+💡 The flags should be entered after property name and before '=' sign,
 which is used to split property name with flags from value to search
 ```
 
