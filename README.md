@@ -60,6 +60,7 @@ But you may want to execute a|b the first, so you need to use brackets like this
 which is used to split property name with flags from value to search
 ```
 
+---
 
 ### An example command
 
