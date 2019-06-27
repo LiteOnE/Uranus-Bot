@@ -46,9 +46,9 @@ But you may want to execute a|b the first, so you need to use brackets like this
 
 ### Flags
 
-- `!` - inversed (Not operation)
-- `*` - partial matching
-- `?` - case sensitive
+- `!` - Inversed (Not operation)
+- `*` - Partial matching (Contains, includes)
+- `?` - Case sensitive
 
 ```
 The flags should be entered after property name and before '=' sign,
@@ -66,8 +66,10 @@ which is used to split property name with flags from value to search
 
 `ban` - Command to be executed on matched members if any
 
-`role!=admin&role=mod` - Has neither of the roles **Admin** or **Mod**. By default all values are case insensitive, so that will match **ADMIN**, **aDmIn** and etc. You may add supply property with `?` flag to match the case
+`role!=admin&role!=mod` - Has neither of the roles **Admin** or **Mod**. By default all values are case insensitive, so that will also match **ADMIN**, **aDmIn** and etc. You may supply property with `?` flag to match the case
 
-`nickname*=john` - Has the word **sas** contained in the user's nickname. If they don't have one, then it will be applied to username
+`nickname*=sas` - Has the word **sas** contained in the user's nickname. If they don't have one, then it will be applied to username
 
-So the bot will ban every member that has **sas** in their name, while not having **Admin** or **Mod** role in any capitalization
+**Result**
+
+The bot will ban every member that has **sas** in their name, while not having **Admin** or **Mod** role in any capitalization
