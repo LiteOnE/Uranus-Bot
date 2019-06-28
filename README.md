@@ -60,7 +60,7 @@ which is used to split property name with flags from value to search
 
 ---
 
-### An example command
+### An example command using queue
 
 ### `$$ban role!=admin&role!=mod&nickname*=sas`
 
@@ -77,3 +77,12 @@ which is used to split property name with flags from value to search
 **Result**
 
 The bot will ban every member that has **sas** in their name, while not having **Admin** or **Mod** role in any capitalization
+
+### You can use @mention or snowflake ID as an argument as well
+
+### `$$rn @fib`
+
+`rn` - shortcut for `resetnickname`
+### `$$warn 396787552775831552 don't nubasify server's members`
+
+### Commands List
