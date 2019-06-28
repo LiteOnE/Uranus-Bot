@@ -153,19 +153,19 @@ client.on('ready', () => {
 
 const CommandsList = {
     'q': [2, '(query/@mention/snowflake)'],//required args,  help str 
-    'kick': [2, '(query/@mention/snowflake) [reason]'],
-    'k': [2, '(query/@mention/snowflake) [reason]'],
-    'ban': [2, '(query/@mention/snowflake) [reason]'],
-    'b': [2, '(query/@mention/snowflake) [reason]'],
+    'kick': [2, '(query/@mention/snowflake) [reason]', 3],
+    'k': [2, '(query/@mention/snowflake) [reason]', 3],
+    'ban': [2, '(query/@mention/snowflake) [reason]', 3],
+    'b': [2, '(query/@mention/snowflake) [reason]', 3],
     'unban': [2, '(@mention/snowflake)'],//accepts only mention or snowflake
     'addrole': [3, '(query/@mention/snowflake) (@role/snowflake)'],//+role
     'ar': [3, '(query/@mention/snowflake) (@role/snowflake)'],
     'removerole': [3, '(query/@mention/snowflake) (@role/snowflake)'],//+role
     'rr': [3, '(query/@mention/snowflake) (@role/snowflake)'],
-    'help': [1],
-    'h': [1],
-    'warn': [2, '(query/@mention/snowflake) [message]'],//+message
-    'w': [2, '(query/@mention/snowflake) [message]'],
+    'help': [1, ''],
+    'h': [1, ''],
+    'warn': [2, '(query/@mention/snowflake) [message]', 3],//+message
+    'w': [2, '(query/@mention/snowflake) [message]', 3],
     'resetnickname': [2, '(query/@mention/snowflake)'],
     'rn': [2, '(query/@mention/snowflake)'],
 }
@@ -183,7 +183,7 @@ client.on('message', message => {
         let command_data = CommandsList[command];
 
         if (command_data !== undefined) {
-            command_arr = commandSplit(message_content, command_data[0]);
+            command_arr = commandSplit(message_content, command_data[2] || command_data[0]);
 
             if (command_arr.length < command_data[0]) {
                 message.channel.send('Wrong arguments!\nUsage: `' + command + ' ' + command_data[1] + '`');
@@ -321,14 +321,47 @@ client.on('message', message => {
 
             case 'help':
             case 'h':
+                let help_msg = '```\n';
+
+                for (let com in CommandsList) {
+                    help_msg += com + ' ' + CommandsList[com][1] + '\n';
+                }
+
+                help_msg += '```';
+
+                message.channel.send(help_msg);
+
                 break;
 
             case 'warn':
             case 'w':
+
+                let warn_msg = 'You have been warned on ' + message.guild.name + '\n\n';
+
+                warn_msg += command_arr[2] || '';
+
+                for (let id of userids) {
+                    client.fetchUser(id.toString()).then(user_obj => {
+                        message.guild.member(user_obj).createDM().then(dmchannel => {
+                            dmchannel.send(warn_msg);
+                        }).catch(err => console.log(err));
+                    }).catch(err => { console.log(err); });
+                }
+
+                message.channel.send('Warned ' + userids.length + ' members');
+                break;
+
                 break;
 
             case 'resetnickname':
             case 'rn':
+                for (let id of userids) {
+                    client.fetchUser(id.toString()).then(user_obj => {
+                        message.guild.member(user_obj).setNickname('');
+                    }).catch(err => { console.log(err); });
+                }
+
+                message.channel.send('Nicknames reset of ' + userids.length + ' members');
                 break;
 
             default:
