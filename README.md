@@ -97,7 +97,7 @@ be separated by space(s)
 Also you might want to close a query with grave accent symbol ` like this `role=sas`
 ```
 
-- `q` - Print matched users \[1 argument - user(s)]
+- `q` - Print matched users \[user(s)]
 - `ban`,`b` - Ban \[user(s)]
 - `unban` - Unban. **Only @mention or snowflake is accepted for this command, for obvious reasons**
 - `kick`, `k` - Kick \[user(s)]
