@@ -87,18 +87,22 @@ The bot will ban every member that has **sas** in their name, while not having *
 
 ### Commands List
 
-\[user(s)] means a command's argument is a query, @mention or snowflake
-\[user(s) role] or similar means a commmand have multiple arguments, each one should be separated by space(s)
-Also you might want to close a query with grave accent symbol \` like this \`role=sas\`
+```
+💡 [user(s)] means a command's argument is a query, @mention or snowflake
+```
+```
+💡 [user(s) role] or similar means a commmand have multiple arguments, each one should be separated by space(s)
+Also you might want to close a query with grave accent symbol ` like this `role=sas`
+```
 
 - `q` - Print matched users \[1 argument - user(s)]
 - `ban`,`b` - Ban \[user(s)]
 - `unban` - Unban. **Only @mention or snowflake is accepted for this command, for obvious reasons**
 - `kick`, `k` - Kick \[user(s)]
-- `unkick`, `uk` - Unkick \[user(s)] Nah, just kidding, there is no such command :smile:
-- `addrole`, `ar` - Add a role \[user(s)  Accepted @role or role ID as the third argument
-- `removerole`, `rr` - Remov a specified role
+- `unkick`, `uk` - Unkick \[user(s)]. Nah, just kidding, there is no such command :smile:
+- `addrole`, `ar` - Add a role \[user(s) role]. Accepted @role or role ID as the third argument
+- `removerole`, `rr` - Remove a specified role \[user(s) role]
 - `help`, `h` - Print help. No arguments
-- `warn`, `w` - Warn matched users in direct message. Third argument is a text - message
-- `resetnickname`, `rn` - Reset nickname
+- `warn`, `w` - Warn matched users in direct message \[user(s) message]. Third argument is a text - message
+- `resetnickname`, `rn` - Reset nickname \[user(s)]
 
