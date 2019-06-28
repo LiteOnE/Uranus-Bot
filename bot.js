@@ -1,11 +1,15 @@
 const Discord = require('discord.js');
-const config = require('./config.json');
+const config = require('./config.json');//{token, prefix}
 
 const client = new Discord.Client();
 
 var guildMembers = [];//todo: move it somewhere
 
 function commandSplit(command, limit) {//using split splice push would result in losing multiple spaces if any
+    if (limit < 2) {
+        return command;
+    }
+
     let result = [];
     let length = 0;
 
@@ -129,11 +133,11 @@ function validateQuery(query_str) {
         return EValidationStatus.INVALID;
     }
 
-    if (balance != 0) {
-        return EValidationStatus.WRONGBALANCE;
+    if (balance >= 0) {
+        return EValidationStatus.WRONGBALANCE | EValidationStatus.VALID;
     }
     else {
-        return EValidationStatus.VALID;
+        return EValidationStatus.WRONGBALANCE;
     }
 }
 
@@ -147,55 +151,89 @@ client.on('ready', () => {
     client.user.setActivity('', { type: 'WATCHING' });
 });
 
+const CommandsList = {
+    'q': [2, '(query/@mention/snowflake)'],//required args,  help str 
+    'kick': [2, '(query/@mention/snowflake) [reason]'],
+    'k': [2, '(query/@mention/snowflake) [reason]'],
+    'ban': [2, '(query/@mention/snowflake) [reason]'],
+    'b': [2, '(query/@mention/snowflake) [reason]'],
+    'unban': [2, '(@mention/snowflake)'],//accepts only mention or snowflake
+    'addrole': [3, '(query/@mention/snowflake) (@role/snowflake)'],//+role
+    'ar': [3, '(query/@mention/snowflake) (@role/snowflake)'],
+    'removerole': [3, '(query/@mention/snowflake) (@role/snowflake)'],//+role
+    'rr': [3, '(query/@mention/snowflake) (@role/snowflake)'],
+    'help': [1],
+    'h': [1],
+    'warn': [2, '(query/@mention/snowflake) [message]'],//+message
+    'w': [2, '(query/@mention/snowflake) [message]'],
+    'resetnickname': [2, '(query/@mention/snowflake)'],
+    'rn': [2, '(query/@mention/snowflake)'],
+}
+
 client.on('message', message => {
 
     let message_content = message.content.trim();
 
     if (message_content.startsWith(config.prefix)) {
-        let parts = commandSplit(message_content.substring(config.prefix.length), 2);
+        message_content = message_content.substring(config.prefix.length);
 
-        //query processing
-        let arg = parts[1];
+        let command_arr = commandSplit(message_content, 2);
+        let command = command_arr[0];
 
-        let mention_arr = arg.match(/<@!?(\d+)>/);
-        let snowflake_arr = arg.match(/^(\d+)$/);
+        let command_data = CommandsList[command];
+
+        if (command_data !== undefined) {
+            command_arr = commandSplit(message_content, command_data[0]);
+
+            if (command_arr.length < command_data[0]) {
+                message.channel.send('Wrong arguments!\nUsage: `' + command + ' ' + command_data[1] + '`');
+                return;
+            }
+        }
+        else {
+            message.channel.send('Unknown command .-.');
+            return;
+        }
 
         let userids = [];
 
-        if (mention_arr !== null) {
-            userids.push(mention_arr[1]);
-        }
-        else if (snowflake_arr !== null) {
-            userids.push(snowflake_arr[1]);
-        } else {
-            let query = '';
-            if (arg[0] == '`') {
-                if (arg[arg.length - 1] == '`') {
-                    query = arg.substring(1, arg.length - 1);
+        if (command_data[0] > 1) {
+            let arg0 = command_arr[1];
+
+            let mention_or_snowflake_arr = arg0.match(/<@!?(\d+)>|^(\d+)$/);//use /<@!?(\d+)>|^(\d+)$/
+            if (mention_or_snowflake_arr !== null) {
+                userids.push(mention_or_snowflake_arr[1] || mention_or_snowflake_arr[2]);
+            }
+            else {
+                let query = '';
+                if (arg0[0] == '`') {
+                    if (arg0[arg0.length - 1] == '`') {
+                        query = arg0.substring(1, arg0.length - 1);
+                    }
+                    else {
+                        //failed initial validation
+                        message.channel.send('invalid query');
+                    }
                 }
                 else {
-                    //failed initial validation
-                    message.channel.send('invalid query');
+                    query = arg0;
                 }
-            }
-            else {
-                query = arg;
-            }
 
-            let validation_status = validateQuery(query);
+                let validation_status = validateQuery(query);
 
-            if (validation_status & EValidationStatus.VALID == EValidationStatus.VALID) {
-                guildMembers = message.guild.members;//todo: use fetchMembers()
+                if (validation_status & EValidationStatus.VALID == EValidationStatus.VALID) {
+                    guildMembers = message.guild.members;//todo: use fetchMembers()
 
-                let query_tree = buildQueryTree(query);
-                userids = executeQuery(query_tree, null, -1);
-            }
-            else {
-                message.channel.send('invalid query: ' + validation_status)
+                    let query_tree = buildQueryTree(query);
+                    userids = executeQuery(query_tree, null, -1);
+                }
+                else {
+                    message.channel.send('invalid query: ' + validation_status)
+                }
             }
         }
 
-        switch (parts[0]) {
+        switch (command) {
             case 'q':
                 let msg = '';
                 for (let id of userids) {
@@ -203,7 +241,94 @@ client.on('message', message => {
                 }
 
                 message.channel.send(userids.length + ' | ' + msg);
+                break;
 
+            case 'kick'://add reason
+            case 'k':
+                for (let id of userids) {
+                    client.fetchUser(id.toString()).then(user_obj => {
+                        message.guild.member(user_obj).kick();
+                    }).catch(err => { console.log(err); });
+                }
+
+                message.channel.send('Kicked ' + userids.length + ' members');
+                break;
+
+            case 'ban'://add reason
+            case 'b':
+                for (let id of userids) {
+                    client.fetchUser(id.toString()).then(user_obj => {
+                        message.guild.member(user_obj).ban();
+                    }).catch(err => { console.log(err); });
+                }
+
+                message.channel.send('Banned ' + userids.length + ' members');
+                break;
+
+            case 'unban':
+                message.channel.send('Unimplemented!');
+                break;
+
+            case 'unkick':
+                message.channel.send('I told you, there is no such command!');
+                break;
+
+            case 'addrole':
+            case 'ar':
+
+                var arg1 = command_arr[2];
+
+                var role_arr = arg1.match(/<@&(\d+)>|^(\d+)&/);
+
+                if (role_arr === null) {
+                    message.channel.send('Invalid args!');
+                }
+
+                var role = role_arr[1] || role_arr[2];
+
+                for (let id of userids) {
+                    client.fetchUser(id.toString()).then(user_obj => {
+                        message.guild.member(user_obj).addRole(role.toString());
+                    }).catch(err => { console.log(err); });
+                }
+
+                message.channel.send('Role added to ' + userids.length + ' members');
+
+
+                break;
+
+            case 'removerole':
+            case 'rr':
+                var arg1 = command_arr[2];
+
+                var role_arr = arg1.match(/<@&(\d+)>|^(\d+)&/);
+
+                if (role_arr === null) {
+                    message.channel.send('Invalid args!');
+                }
+
+                var role = role_arr[1] || role_arr[2];
+
+                for (let id of userids) {
+                    client.fetchUser(id.toString()).then(user_obj => {
+                        message.guild.member(user_obj).removeRole(role.toString());
+                    }).catch(err => { console.log(err); });
+                }
+
+                message.channel.send('Role removed from ' + userids.length + ' members');
+
+                break;
+
+            case 'help':
+            case 'h':
+                break;
+
+            case 'warn':
+            case 'w':
+                break;
+
+            case 'resetnickname':
+            case 'rn':
                 break;
 
             default:
