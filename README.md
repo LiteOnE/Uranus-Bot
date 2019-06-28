@@ -51,9 +51,9 @@ But you may want to execute a|b the first, so you need to use brackets like this
 
 ### Flags
 
-- `!` - Inversed (Not operation)
+- `!` - Inversed (`Not` operation)
 - `*` - Partial matching (Contains, includes)
-- `?` - Case sensitive
+- `?` - Case sensitive (Because by default the bot uses case insensitive search)
 
 ```
 💡 The flags should be entered after property name and before '=' sign,
