@@ -6,10 +6,8 @@
 
 Uranus - a simple moderation bot with a unique member search feature - queries
 
-A lot of mentioned features below are still in progress! You may watch for completion here
+Some of the mentioned features below are still in progress! :smile: You may watch for completion here
 https://github.com/LiteOnE/Uranus-Bot/projects/1
-
-The hardest part with parsing and processing is already done :smile:
 
 ---
 
@@ -62,7 +60,7 @@ which is used to split property name with flags from value to search
 
 ---
 
-### An example command
+### An example command using queue
 
 ### `$$ban role!=admin&role!=mod&nickname*=sas`
 
@@ -79,3 +77,34 @@ which is used to split property name with flags from value to search
 **Result**
 
 The bot will ban every member that has **sas** in their name, while not having **Admin** or **Mod** role in any capitalization
+
+### You can use @mention or snowflake ID as an argument as well
+
+### `$$rn @fib`
+
+`rn` - shortcut for `resetnickname`
+### `$$warn 396787552775831552 don't nubasify server's members`
+
+### Commands List
+
+```
+💡 [user(s)] means a command's argument is a query, @mention or snowflake
+```
+```
+💡 [user(s) role] or similar means a commmand have multiple arguments, each one should
+be separated by space(s)
+
+Also you might want to close a query with grave accent symbol ` like this `role=sas`
+```
+
+- `q` - Print matched users \[user(s)]
+- `ban`,`b` - Ban \[user(s)]
+- `unban` - Unban. **Only @mention or snowflake is accepted for this command, for obvious reasons**
+- `kick`, `k` - Kick \[user(s)]
+- `unkick`, `uk` - Unkick \[user(s)]. Nah, just kidding, there is no such command :smile:
+- `addrole`, `ar` - Add a role \[user(s) role]. Accepted @role or role ID as the third argument
+- `removerole`, `rr` - Remove a specified role \[user(s) role]
+- `help`, `h` - Print help. No arguments
+- `warn`, `w` - Warn matched users in direct message \[user(s) message]. Third argument is a text - message
+- `resetnickname`, `rn` - Reset nickname \[user(s)]
+
