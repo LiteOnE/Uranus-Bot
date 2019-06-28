@@ -45,6 +45,103 @@ function commandSplit(command, limit) {//using split splice push would result in
     return result;
 }
 
+function isLetter(str) {
+    return str.length === 1 && str.match(/[a-z]/i);
+}
+
+const EValidationStatus = {
+    INVALID: 0,//0
+    VALID: 1,//1
+    WRONGBALANCE: 1 << 1,//2
+    INVALIDOPERATOR: 1 << 2,//4
+    UNKNOWNFLAG: 1 << 3,//8
+    NULLVALUE: 1 << 4,//16
+    NULLTAG: 1 << 5,//32
+}
+
+function validateQuery(query_str) {
+    query_str = query_str.toLowerCase();
+
+    //let result_flags = 0;
+
+    let is_tag = true;
+    let tag = '';
+    let val = '';
+    let balance = 0;
+
+
+    for (let i = 0; i < query_str.length; i += 1) {
+        let c = query_str[i];
+
+        if (c == '(') {
+            balance += 1;
+        }
+        else if (c == ')') {
+            balance -= 1;
+        }
+        else {
+            if (is_tag) {
+                if (!isLetter(c)) {
+                    if (tag.length == 0) {
+                        return EValidationStatus.NULLTAG;
+                    }
+                    else {
+                        if (c == '=') {
+                            if (query_str[i + 1] === undefined) {
+                                return EValidationStatus.NULLVALUE;
+                            }
+
+                            tag = '';
+                            is_tag = false;
+                        }
+                        else if (c != '?' && c != '!' && c != '*') {
+                            return EValidationStatus.UNKNOWNFLAG;
+                        }
+                    }
+                }
+                else {
+                    tag += c;
+                }
+            }
+            else {//value
+                if (c == '&' || c == '|') {
+                    if (val.length == 0) {
+                        return EValidationStatus.NULLVALUE;
+                    }
+
+                    if (/*query_str[i + 1] !== undefined && !isLetter(query_str[i + 1]) ||*/
+                        query_str[i + 1] === undefined) {
+                        return EValidationStatus.INVALIDOPERATOR;
+                    }
+                    else {
+                        val = '';
+                        is_tag = true;
+                    }
+                }
+                else {
+                    val += c;
+                }
+            }
+        }
+    }
+
+    if (tag.length != 0) {
+        return EValidationStatus.INVALID;
+    }
+
+    if (balance != 0) {
+        return EValidationStatus.WRONGBALANCE;
+    }
+    else {
+        return EValidationStatus.VALID;
+    }
+}
+
+/*
+console.log(validateQuery('das'));
+return;
+*/
+
 client.on('ready', () => {
     console.log('I am ready!');
     client.user.setActivity('', { type: 'WATCHING' });
@@ -57,36 +154,55 @@ client.on('message', message => {
     if (message_content.startsWith(config.prefix)) {
         let parts = commandSplit(message_content.substring(config.prefix.length), 2);
 
-        switch (parts[0]) {
-            case 'q':
-                let arg = parts[1];
-                let query = '';
-                if (arg[0] == '`') {
-                    if (arg[arg.length - 1] == '`') {
-                        query = arg.substring(1, arg.length - 1);
-                    }
-                    else {
-                        //failed initial validation
-                        message.channel.sendMessage('invalid query');
-                    }
+        //query processing
+        let arg = parts[1];
+
+        let mention_arr = arg.match(/<@!?(\d+)>/);
+        let snowflake_arr = arg.match(/^(\d+)$/);
+
+        let userids = [];
+
+        if (mention_arr !== null) {
+            userids.push(mention_arr[1]);
+        }
+        else if (snowflake_arr !== null) {
+            userids.push(snowflake_arr[1]);
+        } else {
+            let query = '';
+            if (arg[0] == '`') {
+                if (arg[arg.length - 1] == '`') {
+                    query = arg.substring(1, arg.length - 1);
                 }
                 else {
-                    query = arg;
+                    //failed initial validation
+                    message.channel.send('invalid query');
                 }
+            }
+            else {
+                query = arg;
+            }
 
-                //todo: validate query
+            let validation_status = validateQuery(query);
 
+            if (validation_status & EValidationStatus.VALID == EValidationStatus.VALID) {
                 guildMembers = message.guild.members;//todo: use fetchMembers()
 
                 let query_tree = buildQueryTree(query);
-                let res = executeQuery(query_tree, null, -1);
+                userids = executeQuery(query_tree, null, -1);
+            }
+            else {
+                message.channel.send('invalid query: ' + validation_status)
+            }
+        }
 
+        switch (parts[0]) {
+            case 'q':
                 let msg = '';
-                for (let id of res) {
-                    msg += `<@!${id}> `;
+                for (let id of userids) {
+                    msg += `<@${id}> `;
                 }
 
-                message.channel.sendMessage(res.length + ' | ' + msg);
+                message.channel.send(userids.length + ' | ' + msg);
 
                 break;
 
@@ -94,29 +210,7 @@ client.on('message', message => {
                 break;
         }
     }
-    /*
-    if (message.author.id == '396787552775831552') {
-        message.channel.send('shut up biba');
-    }
 
-    if (message.content.startsWith('f')) {
-        var sas = message.content.split(' ')[1];
-
-        var str = '';
-
-        for (var [snowflake, member] of message.guild.members) {
-            str += (member.nickname || '') + '|' + member.user.username + '\n';
-        }
-
-        message.channel.send(str);
-
-        message.channel.send('\\' + sas);
-    }
-
-    if (message.content === 'ping') {
-        message.channel.send('pong');
-    }
-*/
     if (message.content === 'exit') {
         if (message.author.id == '224099990455189504') {
             message.channel.send('k');
@@ -184,13 +278,15 @@ class Node {
         this.val = val;
         this.operator = operator;
 
+        this.flags = 0;
+
         this.low = null;
         this.high = null;
         this.next = null;
     }
 }
 
-function buildQueryTree(query) {
+function buildQueryTree(query) {//high is not needed
     var tag = '';
     var val = '';
 
@@ -270,42 +366,44 @@ function buildQueryTree(query) {
             continue;
         }
 
-        if (c == '=') {
-            is_tag = false;
-            continue;
-        }
-
-        if (c == '&') {
-            cur.low = new Node(tag, val, c);
-            cur.low.high = cur;
-
-            cur = cur.low;
-            cur.next = new Node();
-            cur.next.high = cur.high;
-            cur = cur.next;
-
-            tag = '';
-            val = '';
-
-            is_tag = true;
-        }
-        else if (c == '|') {
-            cur.tag = tag;
-            cur.val = val;
-            cur.operator = c;
-
-            cur.next = new Node();
-            cur.next.high = cur.high;
-            cur = cur.next;
-
-            tag = '';
-            val = '';
-
-            is_tag = true;
-        }
-        else {
-            if (is_tag) {
+        if (is_tag) {
+            if (c == '=') {
+                is_tag = false;
+                continue;
+            }
+            else {
                 tag += c;
+            }
+
+        }
+        else {//value
+            if (c == '&') {
+                cur.low = new Node(tag, val, c);
+                cur.low.high = cur;
+
+                cur = cur.low;
+                cur.next = new Node();
+                cur.next.high = cur.high;
+                cur = cur.next;
+
+                tag = '';
+                val = '';
+
+                is_tag = true;
+            }
+            else if (c == '|') {
+                cur.tag = tag;
+                cur.val = val;
+                cur.operator = c;
+
+                cur.next = new Node();
+                cur.next.high = cur.high;
+                cur = cur.next;
+
+                tag = '';
+                val = '';
+
+                is_tag = true;
             }
             else {
                 val += c;
