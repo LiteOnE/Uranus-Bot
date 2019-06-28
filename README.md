@@ -86,3 +86,15 @@ The bot will ban every member that has **sas** in their name, while not having *
 ### `$$warn 396787552775831552 don't nubasify server's members`
 
 ### Commands List
+
+- `q` - Print matched users
+- `ban`,`b` - Ban
+- `unban` - Unban user. Only @mention or snowflake is accepted for this command, for obvious reasons
+- `kick`, `k` - Kick
+- `unkick`, `uk` - Unkick. Nah, just kidding, there is no such command :smile:
+- `addrole`, `ar` - Add a role. Accepted @mention or role ID as the third argument
+- `removerole`, `rr` - Remov a specified role
+- `help`, `h` - Print help
+- `warn`, `w` - Warn matched users in direct message. Third argument is a text - message
+- `resetnickname`, `rn` - Reset nickname
+
