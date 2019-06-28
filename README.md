@@ -91,7 +91,9 @@ The bot will ban every member that has **sas** in their name, while not having *
 💡 [user(s)] means a command's argument is a query, @mention or snowflake
 ```
 ```
-💡 [user(s) role] or similar means a commmand have multiple arguments, each one should be separated by space(s)
+💡 [user(s) role] or similar means a commmand have multiple arguments, each one should
+be separated by space(s)
+
 Also you might want to close a query with grave accent symbol ` like this `role=sas`
 ```
 
