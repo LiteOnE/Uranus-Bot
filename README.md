@@ -23,10 +23,10 @@ It contains of properties, values, flags, operators and brackets
 
 ### Properties
 
-- `nickname` - Looks at user's nickname on server. If they don't have one, the search will be applied to username
-- `username` - User's username
-- `role` - Role applied to user on server
-- `bot` - Whether or not member is a bot. If you want to match bots, then use `bot=1`, any other value will be considered FALSE - matching non bot members. This property **does not require any flags**
+- `nickname`, `n` - Looks at user's nickname on server. If they don't have one, the search will be applied to username
+- `username`, `u` - User's username
+- `role`, `r` - Role applied to user on server
+- `bot`, `b` - Whether or not member is a bot. If you want to match bots, then use `bot=1`, any other value will be considered FALSE - matching non bot members. This property **does not require any flags**
 
 ### Operators
 
