@@ -60,7 +60,7 @@ which is used to split property name with flags from value to search
 
 ---
 
-### An example command using queue
+### An example command using query
 
 ### `$$ban role!=admin&role!=mod&nickname*=sas`
 
