@@ -9,6 +9,8 @@ Uranus - a simple moderation bot with a unique member search feature - queries
 Some of the mentioned features below are still in progress! :smile: You may watch for completion here
 https://github.com/LiteOnE/Uranus-Bot/projects/1
 
+Author: LT#0001
+
 ---
 
 ## Search query syntax
