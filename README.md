@@ -9,6 +9,8 @@ Uranus - a simple moderation bot with a unique member search feature - queries
 Some of the mentioned features below are still in progress! :smile: You may watch for completion here
 https://github.com/LiteOnE/Uranus-Bot/projects/1
 
+Author: LT#0001
+
 ---
 
 ## Search query syntax
@@ -21,10 +23,10 @@ It contains of properties, values, flags, operators and brackets
 
 ### Properties
 
-- `nickname` - Looks at user's nickname on server. If they don't have one, the search will be applied to username
-- `username` - User's username
-- `role` - Role applied to user on server
-- `bot` - Whether or not member is a bot
+- `nickname`, `n` - Looks at user's nickname on server. If they don't have one, the search will be applied to username
+- `username`, `u` - User's username
+- `role`, `r` - Role applied to user on server
+- `bot`, `b` - Whether or not member is a bot. If you want to match bots, then use `bot=1`, any other value will be considered FALSE - matching non bot members. This property **does not require any flags**
 
 ### Operators
 
@@ -60,9 +62,9 @@ which is used to split property name with flags from value to search
 
 ---
 
-### An example command using queue
+### An example command using query
 
-### `$$ban role!=admin&role!=mod&nickname*=sas`
+### `$$ban role!=admin&role!=mod&n*=sas`
 
 **Breakdown**
 
@@ -72,7 +74,7 @@ which is used to split property name with flags from value to search
 
 `role!=admin&role!=mod` - Has neither of the roles **Admin** or **Mod**. By default all values are case insensitive, so that will also match **ADMIN**, **aDmIn** and etc. You may supply property with `?` flag to match the case
 
-`nickname*=sas` - Has the word **sas** contained in the user's nickname. If they don't have one, then it will be applied to username
+`n*=sas` - Has the word **sas** contained in the user's nickname. If they don't have one, then it will be applied to username. Alse we used a shortcut `n` for `nickname` here
 
 **Result**
 
