@@ -64,7 +64,7 @@ which is used to split property name with flags from value to search
 
 ### An example command using query
 
-### `$$ban role!=admin&role!=mod&nickname*=sas`
+### `$$ban role!=admin&role!=mod&n*=sas`
 
 **Breakdown**
 
@@ -74,7 +74,7 @@ which is used to split property name with flags from value to search
 
 `role!=admin&role!=mod` - Has neither of the roles **Admin** or **Mod**. By default all values are case insensitive, so that will also match **ADMIN**, **aDmIn** and etc. You may supply property with `?` flag to match the case
 
-`nickname*=sas` - Has the word **sas** contained in the user's nickname. If they don't have one, then it will be applied to username
+`n*=sas` - Has the word **sas** contained in the user's nickname. If they don't have one, then it will be applied to username. Alse we used a shortcut `n` for `nickname` here
 
 **Result**
 
