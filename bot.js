@@ -4,6 +4,7 @@ const config = require('./config.json');//{token, prefix}
 const client = new Discord.Client();
 
 var guildMembers = [];//todo: move it somewhere
+var guildRoles = []; //this too
 
 function commandSplit(command, limit) {//using split splice push would result in losing multiple spaces if any
     if (limit < 2) {
@@ -133,9 +134,13 @@ function validateQuery(query_str) {
         return EValidationStatus.INVALID;
     }
 
-    if (balance >= 0) {
-        return EValidationStatus.WRONGBALANCE | EValidationStatus.VALID;
+    if (balance == 0) {
+        return EValidationStatus.VALID;
     }
+    /*
+    else if (balance > 0) {//todo: unclosed brackets should be ok
+        return EValidationStatus.WRONGBALANCE | EValidationStatus.VALID;
+    }*/
     else {
         return EValidationStatus.WRONGBALANCE;
     }
@@ -223,6 +228,7 @@ client.on('message', message => {
 
                 if (validation_status & EValidationStatus.VALID == EValidationStatus.VALID) {
                     guildMembers = message.guild.members;//todo: use fetchMembers()
+                    guildRoles = message.guild.roles;
 
                     let query_tree = buildQueryTree(query);
                     userids = executeQuery(query_tree, null, -1);
@@ -357,11 +363,14 @@ client.on('message', message => {
             case 'rn':
                 for (let id of userids) {
                     client.fetchUser(id.toString()).then(user_obj => {
-                        message.guild.member(user_obj).setNickname('');
+                        message.guild.member(user_obj).setNickname('').then(() => {
+                            message.channel.send('Nicknames reset of ' + userids.length + ' members');
+                        }).catch(err => {
+                            message.channel.send('No permissions to change nicknames!');
+                        });
                     }).catch(err => { console.log(err); });
                 }
 
-                message.channel.send('Nicknames reset of ' + userids.length + ' members');
                 break;
 
             default:
@@ -423,7 +432,7 @@ var query2 = 'username=bab&role=vev';
 var query3 = '(username=sas|username=sos)|(role=bobs|role=vev)&(nickname=sos|nickname=ses)';//u  - username, n - nickname, r = role
 var query4 = 'role=vev&username=bab|username=sas&nickname=bob';
 */
-const EQueryFlags = {
+const EFilterFlags = {
     NONE: 0,
     INVERTED: 1 << 0,
     PARTIAL: 1 << 1,
@@ -529,8 +538,26 @@ function buildQueryTree(query) {//high is not needed
                 is_tag = false;
                 continue;
             }
-            else {
+            else if (isLetter(c)) {
                 tag += c;
+            }
+            else {
+                switch (c) {
+                    case '!':
+                        cur.flags |= EFilterFlags.INVERTED;
+                        break;
+
+                    case '?':
+                        cur.flags |= EFilterFlags.CASESENSITIVE;
+                        break;
+
+                    case '*':
+                        cur.flags |= EFilterFlags.PARTIAL;
+                        break;
+
+                    default:
+                        break;
+                }
             }
 
         }
@@ -586,39 +613,131 @@ function executeQuery(node, filtered_prev, operator) {
         filtered = executeQuery(node.low, null, -1);
     }
     else {
-        node.tag = node.tag.toLowerCase();
-        node.val = node.val.toLowerCase();
+        if (node.flags & EFilterFlags.CASESENSITIVE == 0) {
+            node.tag = node.tag.toLowerCase();
+            node.val = node.val.toLowerCase();
+        }
 
-        switch (node.tag) {//todo: add support for flags
+        switch (node.tag) {
             case 'nickname':
             case 'n':
                 for (let [, member] of guildMembers) {
-                    if (member.nickname.toLowerCase() == node.val) {
-                        filtered.push(member.id);
+                    let property_val = member.nickname;
+
+                    if (property_val === null) {//no nickname, switch to username
+                        property_val = member.user.username;
                     }
+
+                    property_val =
+                        ((node.flags & EFilterFlags.CASESENSITIVE) == EFilterFlags.CASESENSITIVE)
+                            ? property_val
+                            : property_val.toLowerCase();
+
+                    if (
+                        ((node.flags & EFilterFlags.INVERTED) == EFilterFlags.INVERTED)
+                        ^
+                        (
+                            ((node.flags & EFilterFlags.PARTIAL) == EFilterFlags.PARTIAL)
+                                ?
+                                property_val.includes(node.val)
+                                :
+                                property_val == node.val
+                        )
+                    ) { filtered.push(member.id); }
                 }
                 break;
             case 'username':
             case 'u':
                 for (let [, member] of guildMembers) {
-                    if (member.user.username.toLowerCase() == node.val) {
-                        filtered.push(member.id);
-                    }
+                    let property_val = member.user.username;
+
+                    property_val =
+                        ((node.flags & EFilterFlags.CASESENSITIVE) == EFilterFlags.CASESENSITIVE)
+                            ? property_val
+                            : property_val.toLowerCase();
+
+                    if (
+                        ((node.flags & EFilterFlags.INVERTED) == EFilterFlags.INVERTED)
+                        ^
+                        (
+                            ((node.flags & EFilterFlags.PARTIAL) == EFilterFlags.PARTIAL)
+                                ?
+                                property_val.includes(node.val)
+                                :
+                                property_val == node.val
+                        )
+                    ) { filtered.push(member.id); }
                 }
                 break;
             case 'role':
             case 'r':
-                for (let [, member] of guildMembers) {
-                    for (let [snowflake, role] of member.roles) {
-                        if (role.name.toLowerCase() == node.val) {
+                let matchedRoles = [];
+
+                if ((node.flags & EFilterFlags.INVERTED) == EFilterFlags.INVERTED) {
+                    for (let [, member] of guildMembers) {
+                        let hasRole = false;
+
+                        for (let [, role] of member.roles) {
+                            let property_val = role.name;
+
+                            property_val =
+                                ((node.flags & EFilterFlags.CASESENSITIVE) == EFilterFlags.CASESENSITIVE)
+                                    ? property_val
+                                    : property_val.toLowerCase();
+
+                            if (
+                                ((node.flags & EFilterFlags.PARTIAL) == EFilterFlags.PARTIAL)
+                                    ?
+                                    property_val.includes(node.val)
+                                    :
+                                    property_val == node.val
+                            ) {
+                                hasRole = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasRole) {
                             filtered.push(member.id);
-                            break;//if there are identical roles, this will prevent adding a user multiple times if they got them both
+                        }
+                    }
+                }
+                else {
+                    for (let [, role] of guildRoles) {
+                        let property_val = role.name;
+
+                        property_val =
+                            ((node.flags & EFilterFlags.CASESENSITIVE) == EFilterFlags.CASESENSITIVE)
+                                ? property_val
+                                : property_val.toLowerCase();
+
+                        if (
+                            ((node.flags & EFilterFlags.PARTIAL) == EFilterFlags.PARTIAL)
+                                ?
+                                property_val.includes(node.val)
+                                :
+                                property_val == node.val
+                        ) {
+                            matchedRoles.push(role);
+                        }
+                    }
+
+                    for (let role of matchedRoles) {
+                        for (let [, member] of role.members) {
+                            if (!filtered.includes(member.id)) {
+                                filtered.push(member.id);
+                            }
                         }
                     }
                 }
                 break;
             case 'bot':
             case 'b':
+                for (let [, member] of guildMembers) {
+                    if (!(member.user.bot ^ node.val)) {
+                        filtered.push(member.id);
+                    }
+                }
                 break;
             default:
                 break;
