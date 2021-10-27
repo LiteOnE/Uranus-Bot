@@ -9,7 +9,7 @@ Uranus - a simple moderation bot with a unique member search feature - queries
 You may watch for the bot completion here:
 https://github.com/LiteOnE/Uranus-Bot/projects/1
 
-Author: LT#0001
+Author: LT#[]
 
 ---
 
