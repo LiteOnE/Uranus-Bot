@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Uranus Stats</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <style>
+        html,
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: rgb(53, 53, 53);
+            color: rgb(201, 201, 201);
+        }
+
+        #drop_zone {
+            border-style: dashed;
+            border-width: 2px;
+            border-color: black;
+            padding: 10px;
+            font-size: 1.5em;
+            text-align: center;
+            transition: background 200ms;
+            background-color: rgba(148, 51, 238, 0.233);
+            cursor: pointer;
+        }
+
+        #drop_zone.dragged-over {
+            transition: background 200ms;
+            background-color: rgba(232, 51, 238, 0.233);
+        }
+
+        .indicator {
+            width: 50px;
+            color: rgb(53, 53, 53);
+        }
+
+        .indicator:after {
+            position: absolute;
+            content: attr(data-num);
+        }
+
+        .offline {
+            background: #d6d6d6;
+        }
+
+        .online {
+            background: #3cbd3c;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="drop_zone">Drop file here</div>
+    <table id="stats_table">
+
+    </table>
+    <script>
+        let dropZone = $('#drop_zone');
+        let statsTable = $('#stats_table');
+
+        dropZone.on('dragenter', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            dropZone.addClass('dragged-over');
+        });
+
+        dropZone.on('dragover', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            e.originalEvent.dataTransfer.dropEffect = 'copy';
+        });
+
+        dropZone.on('dragleave', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            dropZone.removeClass('dragged-over');
+        });
+
+        function buildColumn(online, offline, date) {
+            return `
+                <td>
+                    <div
+                        class="indicator offline"
+                        style="height: ${offline}px"
+                        data-num="${offline}"
+                    ></div>
+                ${(
+                    online ?
+                        `<div
+                            class="indicator online"
+                            style="height: ${online}px"
+                            data-num="${online}"
+                        ></div>`
+                        :
+                        ''
+                )}
+                    <div>${date.toLocaleTimeString().substr(0, 5)}</div>
+                </td>
+                `;
+        }
+
+        dropZone.on('drop', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            let file = e.originalEvent.dataTransfer.files[0];
+            let reader = new FileReader();
+
+            reader.onload = e => {
+                let text = e.target.result;
+
+                let data_array = text.split(',');
+
+                let cur_date = (new Date(parseInt(data_array[0])));
+                let cur_hours = cur_date.getHours();
+                let cur_minutes = Math.floor(cur_date.getMinutes() / 10);
+
+                let date = (new Date(parseInt(data_array[0])));//current day date
+                let bak_date = null;
+
+                let d = 0;
+
+                let row = '';
+
+                while (data_array[d]) {
+                    for (let h = 0; h < 24; h += 1) {
+                        date.setHours(h);
+
+                        for (let m = 0; m < 6; m += 1) {
+                            date.setMinutes(m * 10);
+
+                            if (cur_hours == h && cur_minutes == m && cur_date.getDate() == date.getDate()) {
+                                row += buildColumn(data_array[d + 1], data_array[d + 2], cur_date);
+
+                                //skip multiple stats withing 10 min window
+                                while (data_array[d] && cur_hours == h && cur_minutes == m && cur_date.getDate() == date.getDate()) {
+                                    d += 3;
+
+                                    cur_date = (new Date(parseInt(data_array[d])));
+                                    cur_hours = cur_date.getHours();
+                                    cur_minutes = Math.floor(cur_date.getMinutes() / 10);
+                                }
+
+                                bak_date = (new Date(parseInt(data_array[d])))
+                            }
+                            else {
+                                row += buildColumn(null, parseInt(data_array[1]) + parseInt(data_array[2]), date);
+                            }
+                        }
+                    }
+
+                    statsTable.append(
+                        `
+                        <tr>
+                            <td>${date.toDateString()}</td>
+                            ${row}
+                        </tr>`
+                    );
+
+                    row = '';
+
+                    date = bak_date;//new day
+                }
+            };
+
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+
+</html>

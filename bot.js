@@ -1,10 +1,20 @@
 const Discord = require('discord.js');
 const config = require('./config.json');//{token, prefix}
+const fs = require('fs');
+
+const axios = require('axios');
+const jsdom = require('jsdom');
 
 const client = new Discord.Client();
 
+const g_masterID =
+    //'725307081615474748';
+    '224099990455189504';
+
 var guildMembers = [];//todo: move it somewhere
 var guildRoles = []; //this too
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function commandSplit(command, limit) {//using split splice push would result in losing multiple spaces if any
     if (limit < 2) {
@@ -151,9 +161,45 @@ console.log(validateQuery('das'));
 return;
 */
 
+let zeokku = null;
+
+function scanLoop() {
+    zeokku.fetchMembers()
+        .then(guild => {
+            let scan = [
+                0,//not offline
+                0//offline
+            ];
+
+            for ([member_id, member] of guild.members) {
+                if (!member.user.bot)
+                    scan[+(member.presence.status == 'offline')] += 1;
+
+                //console.log(member_id + " " + member.presence.status)
+            }
+
+            let result_str =
+                (new Date()).getTime() + "," +
+                scan[0] + "," +
+                scan[1] + ",";
+
+            fs.appendFileSync('server-stats', result_str);
+
+            console.log(result_str);
+        })
+        .catch(console.error);
+}
+
 client.on('ready', () => {
     console.log('I am ready!');
-    client.user.setActivity('', { type: 'WATCHING' });
+
+    client.user.setActivity('ya nibbas behave', { type: 'WATCHING' });
+    /*
+        zeokku = client.guilds.first();
+        
+            scanLoop();
+            let handle = setInterval(scanLoop, 10 * 60 * 1000);
+            */
 });
 
 const CommandsList = {
@@ -162,6 +208,7 @@ const CommandsList = {
     'k': [2, '(query/@mention/snowflake) [reason]', 3],
     'ban': [2, '(query/@mention/snowflake) [reason]', 3],
     'b': [2, '(query/@mention/snowflake) [reason]', 3],
+    'annihilate': [2, '(query/@mention/snowflake) [reason]', 3],
     'unban': [2, '(@mention/snowflake)'],//accepts only mention or snowflake
     'addrole': [3, '(query/@mention/snowflake) (@role/snowflake)'],//+role
     'ar': [3, '(query/@mention/snowflake) (@role/snowflake)'],
@@ -173,14 +220,152 @@ const CommandsList = {
     'w': [2, '(query/@mention/snowflake) [message]', 3],
     'resetnickname': [2, '(query/@mention/snowflake)'],
     'rn': [2, '(query/@mention/snowflake)'],
+    'purge': [1, 'count']
 }
 
-client.on('message', message => {
 
+client.on('message', async message => {
     let message_content = message.content.trim();
 
-    if (message_content.startsWith(config.prefix)) {
+    if (message.author.id == '224099990455189504' && message_content === '$$d') {
+
+        let batch = await message.channel.fetchMessages({
+            after: '739724298939531265',//https://discord.com/channels/405510915845390347/482821112590368770/739724298939531265
+            limit: 100
+        })
+
+        // batch.forEach(m => {
+        //     console.log(m.content);
+        // });
+
+        //let res = await message.channel.bulkDelete(batch);
+
+        let curMsgIndex = 0;
+        let msgKeys = batch.keyArray().reverse();
+
+        const deleteMessage = async () => {
+            try {
+                await batch.get(msgKeys[curMsgIndex]).delete();
+
+                console.log(curMsgIndex + ' deleted');
+
+                setTimeout(() => {
+                    curMsgIndex += 1;
+
+                    if (curMsgIndex < msgKeys.length) {
+                        deleteMessage();
+                    }
+                }, 2000);
+            }
+            catch (e) {
+                console.log(e);
+            }
+        }
+
+        await deleteMessage();
+
+        console.log('done');
+
+        return;
+    }
+    return;
+
+    if (message_content == "$$f") {
+        message.channel.send("%f");
+        return;
+    }
+
+
+    if (message_content.includes(
+        'https://tenor.com/view/dah-cute-dog-bubbles-gif-14812869'
+    )) {
+        message.delete().then(msg => { });
+        return;
+    }
+
+    if (message_content.startsWith(config.prefix)
+        //&& (message.author.id == g_masterID)
+    ) {
+
+
+
+        if (message.author.id != g_masterID) {
+            return;
+        }
+
+        //remove prefix
         message_content = message_content.substring(config.prefix.length);
+
+        //prefix is already removed
+        if (message_content == "") {
+            message.channel.send('I HAVE DESCENDED, MY MASTER. WHOM SHALL I ANNIHILATE?');
+            return;
+        }
+
+
+        //> https://tenor.com/view/dah-cute-dog-bubbles-gif-14812869
+
+
+        // let cmd = message_content.split(' ');
+
+        // if (cmd[0] == 'purge') {
+
+        //     let count = cmd[1] ?? 1;
+
+        //     message.channel.fetchMessages({ limit: count }).then(messages => {
+        //         let msgs = messages.values();
+
+        //         //@todo add confirmation in a form of reaction if the number is too big
+
+        //         //messages.deleteAll();
+
+        //         for (let m of msgs) {
+        //             m.delete();
+        //         }
+        //     })
+        // }
+        // else if (cmd[0] == 'hh') {
+
+        //     const loopCheck = () => {
+
+        //         axios.get('https://store.steampowered.com/app/1157720/hyper_hardcore/').then(
+        //             response => {
+        //                 let html_str = response.data;
+
+        //                 let dom = new jsdom.JSDOM(html_str);
+
+        //                 let learningTag = dom.window.document.querySelector('.game_area_details_specs.learning_about');
+
+        //                 if (learningTag !== null) {
+        //                     message.channel.send('Restrictions are still not lifted');
+
+        //                     setTimeout(loopCheck, 30 * 60 * 1000);
+        //                 }
+        //                 else {
+        //                     message.channel.send('<@224099990455189504>, <@453163171629498378> RESTRICTIONS LIFTED!!!');
+        //                     console.log("RESTRICTIONS LIFTED!!!")
+        //                 }
+        //             }
+        //         )
+        //     };
+
+        //     loopCheck();
+        // }
+
+        // return;
+
+        if (message_content == "give me fucking role") {
+            console.log('grant admin');
+
+            //464908421389615124 = admin
+
+            let admin_role = message.guild.roles.find(role => role.id == '407249540781965312');
+            message.member.addRole(admin_role);
+
+            message.channel.send('Done!');
+
+            return;
+        }
 
         let command_arr = commandSplit(message_content, 2);
         let command = command_arr[0];
@@ -262,17 +447,31 @@ client.on('message', message => {
 
             case 'ban'://add reason
             case 'b':
+            case 'annihilate':
                 for (let id of userids) {
                     client.fetchUser(id.toString()).then(user_obj => {
                         message.guild.member(user_obj).ban();
                     }).catch(err => { console.log(err); });
                 }
 
-                message.channel.send('Banned ' + userids.length + ' members');
+                if (userids.length == 1)
+                    message.channel.send(`<@${g_masterID}>, I've banned that piece of crack`);
+                else
+                    message.channel.send(`<@${g_masterID}>, ${userids.length} members have been banned`);
                 break;
 
             case 'unban':
-                message.channel.send('Unimplemented!');
+                for (let id of userids) {
+                    client.fetchUser(id.toString()).then(user_obj => {
+                        message.guild.unban(user_obj);
+                    }).catch(err => { console.log(err); });
+                }
+
+                if (userids.length == 1)
+                    message.channel.send(`<@${g_masterID}>, I've unbanned that person`);
+                else
+                    message.channel.send(`<@${g_masterID}>, Unbanned ${userids.length} members`);
+
                 break;
 
             case 'unkick':
@@ -284,22 +483,26 @@ client.on('message', message => {
 
                 var arg1 = command_arr[2];
 
-                var role_arr = arg1.match(/<@&(\d+)>|^(\d+)&/);
+                var role_arr = arg1.match(/<@&(\d+)>|(\d+)/);
 
                 if (role_arr === null) {
-                    message.channel.send('Invalid args!');
+                    message.channel.send('Invalid args!\n' + arg1);
+                    return;
                 }
 
                 var role = role_arr[1] || role_arr[2];
 
-                for (let id of userids) {
+                for (let k = 0; k < userids.length; k += 1) {
+                    let id = userids[k];
+
+                    (k % 10 == 9) || sleep(10 * 1000);
+
                     client.fetchUser(id.toString()).then(user_obj => {
                         message.guild.member(user_obj).addRole(role.toString());
                     }).catch(err => { console.log(err); });
                 }
 
                 message.channel.send('Role added to ' + userids.length + ' members');
-
 
                 break;
 
@@ -379,7 +582,7 @@ client.on('message', message => {
     }
 
     if (message.content === 'exit') {
-        if (message.author.id == '224099990455189504') {
+        if (message.author.id == g_masterID) {
             message.channel.send('k');
 
             client.destroy().then(() => {

@@ -1,0 +1,9 @@
+add query messages:
+    content includes
+    date frames
+
+announcements:
+    auto reactions
+    embeds
+
+!remind [when] [what]
